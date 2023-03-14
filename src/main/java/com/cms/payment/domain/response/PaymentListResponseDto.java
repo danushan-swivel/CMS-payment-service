@@ -24,7 +24,7 @@ public class PaymentListResponseDto extends ResponseDto{
         return paymentPage.stream().map(payment -> {
             var studentResponse = studentMap.get(payment.getStudentId());
             var locationResponse = tuitionClassMap.get(studentResponse.getTuitionClassId());
-            return paymentResponseDto = new PaymentResponseDto(payment, studentResponse, locationResponse);
+            return new PaymentResponseDto(payment, studentResponse, locationResponse);
         }).collect(Collectors.toList());
     }
 }
