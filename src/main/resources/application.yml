@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: CMS Student Payment
+    name: CMS-Student-Payment
 
   datasource:
     url: jdbc:mysql://localhost:3306/cms_payment
@@ -14,5 +14,15 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
     hibernate:
-      ddl-auto=update: update
+      ddl-auto: update
 
+student:
+  uri:
+    baseUrl: http://localhost:8104/
+    getStudentById: api/v1/student/##STUDENT-ID##
+    getAllStudentDetails: api/v1/student
+
+location:
+  uri:
+    baseUrl: http://localhost:8105/
+    getAllLocationDetails: api/v1/location/
