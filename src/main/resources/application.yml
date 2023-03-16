@@ -16,6 +16,13 @@ spring:
     hibernate:
       ddl-auto: update
 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://cms-discovery.herokuapp.com/eureka
+  instance:
+    preferIpAddress: true
+
 student:
   uri:
     baseUrl: https://cms-student.herokuapp.com/
