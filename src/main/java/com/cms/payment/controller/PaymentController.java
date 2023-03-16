@@ -4,12 +4,13 @@ import com.cms.payment.domain.entity.Payment;
 import com.cms.payment.domain.request.PaymentRequestDto;
 import com.cms.payment.domain.request.UpdatePaymentRequestDto;
 import com.cms.payment.domain.response.PaymentListResponseDto;
+import com.cms.payment.domain.response.PaymentReportListResponseDto;
 import com.cms.payment.domain.response.PaymentResponseDto;
 import com.cms.payment.enums.ErrorResponseStatus;
 import com.cms.payment.enums.SuccessResponseStatus;
 import com.cms.payment.exception.InvalidPaymentException;
-import com.cms.payment.exception.PaymentException;
 import com.cms.payment.exception.InvalidStudentException;
+import com.cms.payment.exception.PaymentException;
 import com.cms.payment.service.PaymentService;
 import com.cms.payment.utills.Constants;
 import com.cms.payment.wrapper.ErrorResponseWrapper;
@@ -135,6 +136,23 @@ public class PaymentController {
         } catch (InvalidPaymentException e) {
             var response = new ErrorResponseWrapper(ErrorResponseStatus.INVALID_PAYMENT, null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (PaymentException e) {
+            var response = new ErrorResponseWrapper(ErrorResponseStatus.INTERNAL_SERVER_ERROR, null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/user/report/{month}/{year}")
+    public ResponseEntity<ResponseWrapper> getUserReport(@PathVariable String month, @PathVariable int year,
+                                                            HttpServletRequest request) {
+        try {
+            String authToken = request.getHeader(Constants.TOKEN_HEADER);
+            Page<Payment> paymentPage = paymentService.getUserReport(month, year);
+            var studentMap = paymentService.getStudentsDetails(authToken);
+            var locationMap = paymentService.getTuitionClassDetails(authToken);
+            var response = new PaymentReportListResponseDto(paymentPage, studentMap, locationMap);
+            var successResponseWrapper = new SuccessResponseWrapper(SuccessResponseStatus.READ_STUDENT_PAYMENT_REPORT, response);
+            return new ResponseEntity<>(successResponseWrapper, HttpStatus.OK);
         } catch (PaymentException e) {
             var response = new ErrorResponseWrapper(ErrorResponseStatus.INTERNAL_SERVER_ERROR, null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);

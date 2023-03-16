@@ -1,6 +1,5 @@
 package com.cms.payment.wrapper;
 
-import com.cms.payment.domain.response.ResponseDto;
 import com.cms.payment.domain.response.StudentResponseDto;
 import lombok.Getter;
 import lombok.Setter;

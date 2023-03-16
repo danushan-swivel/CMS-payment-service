@@ -25,4 +25,4 @@ student:
 location:
   uri:
     baseUrl: http://localhost:8105/
-    getAllLocationDetails: api/v1/location/
+    getAllLocationDetails: api/v1/tuition/

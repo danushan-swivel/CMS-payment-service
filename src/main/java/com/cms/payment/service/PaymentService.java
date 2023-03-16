@@ -1,15 +1,14 @@
 package com.cms.payment.service;
 
 import com.cms.payment.domain.entity.Payment;
+import com.cms.payment.domain.request.PaymentMonthDto;
 import com.cms.payment.domain.request.PaymentRequestDto;
 import com.cms.payment.domain.request.UpdatePaymentRequestDto;
-import com.cms.payment.domain.response.TuitionClassResponseDto;
 import com.cms.payment.domain.response.StudentResponseDto;
-import com.cms.payment.exception.InvalidPaymentException;
-import com.cms.payment.exception.PaymentException;
-import com.cms.payment.exception.InvalidStudentException;
-import com.cms.payment.exception.UnavailableException;
+import com.cms.payment.domain.response.TuitionClassResponseDto;
+import com.cms.payment.exception.*;
 import com.cms.payment.repository.PaymentRepository;
+import com.cms.payment.utills.Constants;
 import com.cms.payment.wrapper.LocationListResponseWrapper;
 import com.cms.payment.wrapper.StudentListResponseWrapper;
 import com.cms.payment.wrapper.StudentResponseWrapper;
@@ -20,7 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -29,6 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -36,13 +38,15 @@ public class PaymentService {
 
     private static final int PAGE = 0;
     private static final int SIZE = 10;
+    private static final String DEFAULT_SORT = "updated_at";
+    private static final String INVALID_PAYMENT_ID_MESSAGE = "Invalid payment Id : ";
+    private static final String CONNECTION_EXCEPTION_MESSAGE = "The requested resource couldn't access due to unavailability";
+    private static final String STUDENT_ID_REPLACE_PHRASE = "##STUDENT-ID##";
     private final PaymentRepository paymentRepository;
     private final RestTemplate restTemplate;
     private final String getStudentByIdUrl;
     private final String getAllStudentDetails;
     private final String getAllLocationDetails;
-    private static final String DEFAULT_SORT = "updated_at";
-    private static final String STUDENT_ID_REPLACE_PHRASE = "##STUDENT-ID##";
 
     @Autowired
     public PaymentService(PaymentRepository paymentRepository, RestTemplate restTemplate,
@@ -61,25 +65,26 @@ public class PaymentService {
     public Payment makePayment(PaymentRequestDto paymentRequestDto, String authToken) {
         try {
             Payment payment = new Payment(paymentRequestDto);
+            if (checkExistsPayment(paymentRequestDto.getPaymentMonth(), paymentRequestDto.getStudentId(), null)) {
+                throw new PaymentAlreadyExistsException("The payment already made for : "
+                        + paymentRequestDto.getPaymentMonth().getCombinedDate());
+            }
             var headers = new HttpHeaders();
-            headers.set("access_token", authToken);
+            headers.set(Constants.TOKEN_HEADER, authToken);
             var entity = new HttpEntity<String>(headers);
             String uri = getStudentByIdUrl.replace(STUDENT_ID_REPLACE_PHRASE, paymentRequestDto.getStudentId());
             var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
                     StudentResponseWrapper.class);
-            if (studentResponse.getBody().getData() == null) {
-                throw new InvalidStudentException("Invalid student Id : " + paymentRequestDto.getStudentId());
+            var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
+            if (statusCode != 2004) {
+                throw new InvalidStudentException(INVALID_PAYMENT_ID_MESSAGE + paymentRequestDto.getStudentId());
             }
-             return paymentRepository.save(payment);
+            return paymentRepository.save(payment);
         } catch (ResourceAccessException e) {
-            throw new UnavailableException("The requested resource couldn't access due to unavailability");
+            throw new ConnectionException(CONNECTION_EXCEPTION_MESSAGE);
         } catch (HttpClientErrorException e) {
-            if (e.getRawStatusCode() == HttpStatus.BAD_REQUEST.value()) {
-                throw new InvalidStudentException("Invalid student Id : " + paymentRequestDto.getStudentId());
-            }
             throw new PaymentException("Validating student identity is failed", e);
-        }
-        catch (DataAccessException e) {
+        } catch (DataAccessException e) {
             throw new PaymentException("Saving payment details into database is failed.", e);
         }
     }
@@ -88,30 +93,40 @@ public class PaymentService {
         try {
             Optional<Payment> optionalPayment = paymentRepository.findById(paymentId);
             if (optionalPayment.isEmpty()) {
-                throw new InvalidPaymentException("Invalid payment Id : "+ paymentId);
+                throw new InvalidPaymentException(INVALID_PAYMENT_ID_MESSAGE + paymentId);
             }
             return optionalPayment.get();
         } catch (DataAccessException e) {
-            throw new PaymentException("Retrieving payment from database is failed for "+ paymentId);
+            throw new PaymentException("Retrieving payment from database is failed for " + paymentId);
         }
     }
 
     public Payment updatePayment(UpdatePaymentRequestDto updatePaymentRequestDto, String authToken) {
         try {
             Payment paymentFromDB = getPaymentById(updatePaymentRequestDto.getPaymentId());
+            if (checkExistsPayment(updatePaymentRequestDto.getPaymentMonth(), updatePaymentRequestDto.getStudentId(),
+                    updatePaymentRequestDto.getPaymentId())) {
+                throw new PaymentAlreadyExistsException("The payment already made for : "
+                        + updatePaymentRequestDto.getPaymentMonth().getCombinedDate());
+            }
             var headers = new HttpHeaders();
-            headers.set("access_token", authToken);
+            headers.set(Constants.TOKEN_HEADER, authToken);
             var entity = new HttpEntity<String>(headers);
             String uri = getStudentByIdUrl.replace(STUDENT_ID_REPLACE_PHRASE, paymentFromDB.getStudentId());
             var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
                     StudentResponseWrapper.class);
-            if (studentResponse.getBody().getData() == null) {
-                throw new InvalidStudentException("Invalid student Id : " + paymentFromDB.getStudentId());
+            var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
+            if (statusCode != 2004) {
+                throw new InvalidStudentException(INVALID_PAYMENT_ID_MESSAGE + paymentFromDB.getStudentId());
             }
             paymentFromDB.update(updatePaymentRequestDto);
             return paymentFromDB;
+        } catch (ResourceAccessException e) {
+            throw new ConnectionException(CONNECTION_EXCEPTION_MESSAGE);
+        } catch (HttpClientErrorException e) {
+            throw new PaymentException("Validating student identity is failed", e);
         } catch (DataAccessException e) {
-            throw new PaymentException("Updating payment is failed for "+ updatePaymentRequestDto.getPaymentId());
+            throw new PaymentException("Updating payment is failed for " + updatePaymentRequestDto.getPaymentId());
         }
     }
 
@@ -122,7 +137,7 @@ public class PaymentService {
             paymentFromDB.setUpdatedAt(new Date(System.currentTimeMillis()));
             paymentRepository.save(paymentFromDB);
         } catch (DataAccessException e) {
-            throw new PaymentException("Deleting payment from database is failed for "+ paymentId);
+            throw new PaymentException("Deleting payment from database is failed for " + paymentId);
         }
     }
 
@@ -146,42 +161,66 @@ public class PaymentService {
     }
 
     public Map<String, StudentResponseDto> getStudentsDetails(String authToken) {
-        try{
+        try {
             var headers = new HttpHeaders();
             headers.set("access_token", authToken);
             var entity = new HttpEntity<String>(headers);
             var studentResponse = restTemplate.exchange(getAllStudentDetails, HttpMethod.GET, entity,
                     StudentListResponseWrapper.class);
-            var studentResponseList = studentResponse.getBody().getData().getStudents();
+            var studentResponseList = Objects.requireNonNull(studentResponse.getBody()).getData().getStudents();
             Map<String, StudentResponseDto> studentDetailsMap = new HashMap<>();
-            for (StudentResponseDto responseDto: studentResponseList) {
+            for (StudentResponseDto responseDto : studentResponseList) {
                 studentDetailsMap.put(responseDto.getStudentId(), responseDto);
             }
             return studentDetailsMap;
         } catch (ResourceAccessException e) {
-            throw new UnavailableException("The requested resource couldn't access due to unavailability");
+            throw new ConnectionException(CONNECTION_EXCEPTION_MESSAGE);
         } catch (HttpClientErrorException e) {
             throw new PaymentException("The requesting data is failed.", e);
         }
     }
 
     public Map<String, TuitionClassResponseDto> getTuitionClassDetails(String authToken) {
-        try{
+        try {
             var headers = new HttpHeaders();
             headers.set("access_token", authToken);
             var entity = new HttpEntity<String>(headers);
             var tuitionClassResponse = restTemplate.exchange(getAllLocationDetails, HttpMethod.GET, entity,
                     LocationListResponseWrapper.class);
-            var tuitionClassResponseList = tuitionClassResponse.getBody().getData().getLocations();
+            var tuitionClassResponseList = Objects.requireNonNull(tuitionClassResponse.getBody()).getData().getLocations();
             Map<String, TuitionClassResponseDto> tuitionClassDetailsMap = new HashMap<>();
-            for (TuitionClassResponseDto responseDto: tuitionClassResponseList) {
+            for (TuitionClassResponseDto responseDto : tuitionClassResponseList) {
                 tuitionClassDetailsMap.put(responseDto.getTuitionClassId(), responseDto);
             }
             return tuitionClassDetailsMap;
         } catch (ResourceAccessException e) {
-            throw new UnavailableException("The requested resource couldn't access due to unavailability");
+            throw new ConnectionException(CONNECTION_EXCEPTION_MESSAGE);
         } catch (HttpClientErrorException e) {
             throw new PaymentException("The requesting data is failed.", e);
+        }
+    }
+
+    public Page<Payment> getUserReport(String month, int year) {
+        try {
+            String paymentMonth = new PaymentMonthDto(month, year).getCombinedDate();
+            Pageable pageable = PageRequest.of(PAGE, SIZE, Sort.by(DEFAULT_SORT).descending());
+            return paymentRepository.findByPaymentMonth(pageable, paymentMonth);
+        } catch (DataAccessException e) {
+            throw new PaymentException("Retrieving the payment reports from database is failed");
+        }
+    }
+
+    private boolean checkExistsPayment(PaymentMonthDto paymentMonth, String studentId, String paymentId) {
+        try {
+            var paymentMonthAsString = paymentMonth.getCombinedDate();
+            if (paymentId == null) {
+                return paymentRepository.existsByPaymentMonthAndStudentIdAndIsDeletedFalse(paymentMonthAsString, studentId);
+            } else {
+                return paymentRepository
+                        .existsByPaymentMonthAndStudentIdAndPaymentIdAndIsDeletedFalse(paymentMonthAsString, studentId, paymentId);
+            }
+        } catch (DataAccessException e) {
+            throw new PaymentException("Checking the existing payment is failed");
         }
     }
 }

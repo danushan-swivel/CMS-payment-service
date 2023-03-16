@@ -19,4 +19,11 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
 
     @Query(value = "SELECT * FROM payment p WHERE p.is_deleted=false AND p.payment_id=?1", nativeQuery = true)
     Optional<Payment> findById(String paymentId);
+
+    @Query(value = "SELECT * FROM payment p WHERE p.is_deleted=false AND p.payment_month=?1", nativeQuery = true)
+    Page<Payment> findByPaymentMonth(Pageable pageable, String paymentMonth);
+
+    boolean existsByPaymentMonthAndStudentIdAndIsDeletedFalse(String paymentMonth, String studentId);
+
+    boolean existsByPaymentMonthAndStudentIdAndPaymentIdAndIsDeletedFalse(String paymentMonth, String studentId, String paymentId);
 }
