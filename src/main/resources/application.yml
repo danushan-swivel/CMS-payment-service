@@ -6,7 +6,7 @@ spring:
     name: CMS-Student-Payment
 
   datasource:
-    url: jdbc:mysql://localhost:3306/cms_payment
+    url: jdbc:mysql://bade90e09555e2:d1873f8e@us-cdbr-east-06.cleardb.net/heroku_80aa2644224a030?reconnect=true
     username: root
     password: Dev@#$123
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -18,11 +18,11 @@ spring:
 
 student:
   uri:
-    baseUrl: http://localhost:8104/
+    baseUrl: https://cms-student.herokuapp.com/
     getStudentById: api/v1/student/##STUDENT-ID##
     getAllStudentDetails: api/v1/student
 
 location:
   uri:
-    baseUrl: http://localhost:8105/
+    baseUrl: https://cms-location.herokuapp.com/
     getAllLocationDetails: api/v1/tuition/
