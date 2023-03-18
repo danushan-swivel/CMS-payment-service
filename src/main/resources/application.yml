@@ -33,7 +33,7 @@ student:
 
 location:
   uri:
-    baseUrl: https://cms-location.herokuapp.com/
+    baseUrl: https://cms-tuition-class.herokuapp.com/
     getAllLocationDetails: tuition/api/v1/tuition/
 
 security:
