@@ -1,5 +1,7 @@
 server:
   port: 8101
+  servlet:
+    context-path: /payment
 
 spring:
   application:
@@ -7,8 +9,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://bade90e09555e2:d1873f8e@us-cdbr-east-06.cleardb.net/heroku_80aa2644224a030?reconnect=true
-    username: root
-    password: Dev@#$123
+#    username: root
+#    password: Dev@#$123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -26,10 +28,13 @@ eureka:
 student:
   uri:
     baseUrl: https://cms-student.herokuapp.com/
-    getStudentById: api/v1/student/##STUDENT-ID##
-    getAllStudentDetails: api/v1/student
+    getStudentById: student/api/v1/student/##STUDENT-ID##
+    getAllStudentDetails: student/api/v1/student
 
 location:
   uri:
     baseUrl: https://cms-location.herokuapp.com/
-    getAllLocationDetails: api/v1/tuition/
+    getAllLocationDetails: tuition/api/v1/tuition/
+
+security:
+  key: accessKey

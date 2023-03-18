@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cms.payment.utills.Constants;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,11 +21,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JwtValidator extends OncePerRequestFilter {
+    private final String key;
+
+    public JwtValidator(@Value("${security.key}") String key) {
+        this.key = key;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain) throws ServletException, IOException {
         String jwtToken = httpServletRequest.getHeader(Constants.TOKEN_HEADER);
         if (jwtToken != null) {
-            JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(Constants.SECRET_KEY.getBytes())).build();
+            JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(key)).build();
             DecodedJWT decodedJWT = jwtVerifier.verify(jwtToken);
             String userName = decodedJWT.getClaim("username").toString();
             var roles = decodedJWT.getClaim("authorities").asList(String.class);

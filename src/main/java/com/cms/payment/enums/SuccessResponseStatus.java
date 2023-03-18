@@ -7,6 +7,8 @@ public enum SuccessResponseStatus {
 
     PAID_SUCCESSFUL(2050, "The payment made successfully"),
     READ_STUDENT(2004, "Student retrieved successfully"),
+    READ_STUDENT_LIST(2002, "Students details retrieved successfully"),
+    READ_LOCATION_LIST(2031, "All location details retrieved successfully"),
     PAYMENT_UPDATED(2051, "The payment updated successfully"),
     PAYMENT_DELETED(2052, "The payment deleted successfully"),
     READ_PAYMENT(2053, "The payment retrieved successfully"),

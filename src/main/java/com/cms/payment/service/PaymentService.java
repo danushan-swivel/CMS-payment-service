@@ -10,7 +10,7 @@ import com.cms.payment.enums.SuccessResponseStatus;
 import com.cms.payment.exception.*;
 import com.cms.payment.repository.PaymentRepository;
 import com.cms.payment.utills.Constants;
-import com.cms.payment.wrapper.LocationListResponseWrapper;
+import com.cms.payment.wrapper.TuitionClassListResponseWrapper;
 import com.cms.payment.wrapper.StudentListResponseWrapper;
 import com.cms.payment.wrapper.StudentResponseWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,7 +177,7 @@ public class PaymentService {
             headers.set("access_token", authToken);
             var entity = new HttpEntity<String>(headers);
             var tuitionClassResponse = restTemplate.exchange(getAllLocationDetails, HttpMethod.GET, entity,
-                    LocationListResponseWrapper.class);
+                    TuitionClassListResponseWrapper.class);
             var tuitionClassResponseList = Objects.requireNonNull(tuitionClassResponse.getBody()).getData().getLocations();
             Map<String, TuitionClassResponseDto> tuitionClassDetailsMap = new HashMap<>();
             for (TuitionClassResponseDto responseDto : tuitionClassResponseList) {

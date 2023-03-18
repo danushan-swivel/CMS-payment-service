@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LocationListResponseWrapper {
+public class TuitionClassListResponseWrapper {
     private String message;
     private int statusCode;
     private TuitionClassListResponseDto data;
