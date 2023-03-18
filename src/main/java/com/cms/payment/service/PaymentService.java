@@ -6,6 +6,7 @@ import com.cms.payment.domain.request.PaymentRequestDto;
 import com.cms.payment.domain.request.UpdatePaymentRequestDto;
 import com.cms.payment.domain.response.StudentResponseDto;
 import com.cms.payment.domain.response.TuitionClassResponseDto;
+import com.cms.payment.enums.SuccessResponseStatus;
 import com.cms.payment.exception.*;
 import com.cms.payment.repository.PaymentRepository;
 import com.cms.payment.utills.Constants;
@@ -37,9 +38,10 @@ import java.util.Optional;
 public class PaymentService {
 
     private static final int PAGE = 0;
-    private static final int SIZE = 10;
+    private static final int SIZE = 100;
     private static final String DEFAULT_SORT = "updated_at";
     private static final String INVALID_PAYMENT_ID_MESSAGE = "Invalid payment Id : ";
+    private static final String INVALID_STUDENT_ID_MESSAGE = "Invalid student Id : ";
     private static final String CONNECTION_EXCEPTION_MESSAGE = "The requested resource couldn't access due to unavailability";
     private static final String STUDENT_ID_REPLACE_PHRASE = "##STUDENT-ID##";
     private final PaymentRepository paymentRepository;
@@ -69,15 +71,9 @@ public class PaymentService {
                 throw new PaymentAlreadyExistsException("The payment already made for : "
                         + paymentRequestDto.getPaymentMonth().getCombinedDate());
             }
-            var headers = new HttpHeaders();
-            headers.set(Constants.TOKEN_HEADER, authToken);
-            var entity = new HttpEntity<String>(headers);
             String uri = getStudentByIdUrl.replace(STUDENT_ID_REPLACE_PHRASE, paymentRequestDto.getStudentId());
-            var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
-                    StudentResponseWrapper.class);
-            var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
-            if (statusCode != 2004) {
-                throw new InvalidStudentException(INVALID_PAYMENT_ID_MESSAGE + paymentRequestDto.getStudentId());
+            if (!existsStudentId(uri, authToken)) {
+                throw new InvalidStudentException(INVALID_STUDENT_ID_MESSAGE + paymentRequestDto.getStudentId());
             }
             return paymentRepository.save(payment);
         } catch (ResourceAccessException e) {
@@ -109,17 +105,12 @@ public class PaymentService {
                 throw new PaymentAlreadyExistsException("The payment already made for : "
                         + updatePaymentRequestDto.getPaymentMonth().getCombinedDate());
             }
-            var headers = new HttpHeaders();
-            headers.set(Constants.TOKEN_HEADER, authToken);
-            var entity = new HttpEntity<String>(headers);
             String uri = getStudentByIdUrl.replace(STUDENT_ID_REPLACE_PHRASE, paymentFromDB.getStudentId());
-            var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
-                    StudentResponseWrapper.class);
-            var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
-            if (statusCode != 2004) {
-                throw new InvalidStudentException(INVALID_PAYMENT_ID_MESSAGE + paymentFromDB.getStudentId());
+            if (!existsStudentId(uri, authToken)) {
+                throw new InvalidStudentException(INVALID_STUDENT_ID_MESSAGE + updatePaymentRequestDto.getStudentId());
             }
             paymentFromDB.update(updatePaymentRequestDto);
+            paymentRepository.save(paymentFromDB);
             return paymentFromDB;
         } catch (ResourceAccessException e) {
             throw new ConnectionException(CONNECTION_EXCEPTION_MESSAGE);
@@ -222,5 +213,18 @@ public class PaymentService {
         } catch (DataAccessException e) {
             throw new PaymentException("Checking the existing payment is failed");
         }
+    }
+
+    private boolean existsStudentId(String uri, String authToken) {
+        var headers = new HttpHeaders();
+        headers.set(Constants.TOKEN_HEADER, authToken);
+        var entity = new HttpEntity<String>(headers);
+        var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
+                StudentResponseWrapper.class);
+        var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
+        if (statusCode == SuccessResponseStatus.READ_STUDENT.getStatusCode()) {
+            return true;
+        }
+        return false;
     }
 }
