@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Jwt validation Configuration
+ */
 public class JwtValidator extends OncePerRequestFilter {
     private final String key;
 

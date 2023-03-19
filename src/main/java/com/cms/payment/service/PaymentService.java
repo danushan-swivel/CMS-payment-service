@@ -10,9 +10,9 @@ import com.cms.payment.enums.SuccessResponseStatus;
 import com.cms.payment.exception.*;
 import com.cms.payment.repository.PaymentRepository;
 import com.cms.payment.utills.Constants;
-import com.cms.payment.wrapper.TuitionClassListResponseWrapper;
 import com.cms.payment.wrapper.StudentListResponseWrapper;
 import com.cms.payment.wrapper.StudentResponseWrapper;
+import com.cms.payment.wrapper.TuitionClassListResponseWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -34,6 +34,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Payment Service
+ */
 @Service
 public class PaymentService {
 
@@ -64,6 +67,13 @@ public class PaymentService {
         this.getAllLocationDetails = locationBaseUrl + getAllLocationDetails;
     }
 
+    /**
+     * Method to create new payment
+     *
+     * @param paymentRequestDto payment request dto
+     * @param authToken         access token
+     * @return Payment
+     */
     public Payment makePayment(PaymentRequestDto paymentRequestDto, String authToken) {
         try {
             Payment payment = new Payment(paymentRequestDto);
@@ -85,6 +95,12 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Get payment by payment id
+     *
+     * @param paymentId payment id
+     * @return Payment
+     */
     public Payment getPaymentById(String paymentId) {
         try {
             Optional<Payment> optionalPayment = paymentRepository.findById(paymentId);
@@ -97,6 +113,13 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Update the existing payment
+     *
+     * @param updatePaymentRequestDto update payment request dto
+     * @param authToken               access token
+     * @return Payment
+     */
     public Payment updatePayment(UpdatePaymentRequestDto updatePaymentRequestDto, String authToken) {
         try {
             Payment paymentFromDB = getPaymentById(updatePaymentRequestDto.getPaymentId());
@@ -121,6 +144,11 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Delete payment by payment id
+     *
+     * @param paymentId payment id
+     */
     public void deletePayment(String paymentId) {
         try {
             Payment paymentFromDB = getPaymentById(paymentId);
@@ -132,6 +160,11 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Get all payment details page
+     *
+     * @return PaymentPage
+     */
     public Page<Payment> getAllPayment() {
         try {
             Pageable pageable = PageRequest.of(PAGE, SIZE, Sort.by(DEFAULT_SORT).descending());
@@ -141,6 +174,12 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Get payment details page for a student id
+     *
+     * @param studentId student id
+     * @return PaymentPage
+     */
     public Page<Payment> getPaymentsByStudentId(String studentId) {
         try {
             Pageable pageable = PageRequest.of(PAGE, SIZE, Sort.by(DEFAULT_SORT).descending());
@@ -151,6 +190,12 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Get the student details with mapped with student id
+     *
+     * @param authToken access token
+     * @return StudentResponseDtoMap
+     */
     public Map<String, StudentResponseDto> getStudentsDetails(String authToken) {
         try {
             var headers = new HttpHeaders();
@@ -171,6 +216,12 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Get tuition class map with tuition class id
+     *
+     * @param authToken access token
+     * @return TuitionClasssResponseDtoMap
+     */
     public Map<String, TuitionClassResponseDto> getTuitionClassDetails(String authToken) {
         try {
             var headers = new HttpHeaders();
@@ -191,6 +242,13 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Get students payment report for a given month
+     *
+     * @param month month
+     * @param year  year
+     * @return PaymentPage
+     */
     public Page<Payment> getUserReport(String month, int year) {
         try {
             String paymentMonth = new PaymentMonthDto(month, year).getCombinedDate();
@@ -201,6 +259,14 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Check the exists of a payment
+     *
+     * @param paymentMonth payment month
+     * @param studentId    student id
+     * @param paymentId    payment id
+     * @return true/ false
+     */
     private boolean checkExistsPayment(PaymentMonthDto paymentMonth, String studentId, String paymentId) {
         try {
             var paymentMonthAsString = paymentMonth.getCombinedDate();
@@ -215,6 +281,13 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Check the existence of the student id
+     *
+     * @param uri       student service uri
+     * @param authToken access token
+     * @return true/ false
+     */
     private boolean existsStudentId(String uri, String authToken) {
         var headers = new HttpHeaders();
         headers.set(Constants.TOKEN_HEADER, authToken);
@@ -222,9 +295,6 @@ public class PaymentService {
         var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
                 StudentResponseWrapper.class);
         var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
-        if (statusCode == SuccessResponseStatus.READ_STUDENT.getStatusCode()) {
-            return true;
-        }
-        return false;
+        return statusCode == SuccessResponseStatus.READ_STUDENT.getStatusCode();
     }
 }

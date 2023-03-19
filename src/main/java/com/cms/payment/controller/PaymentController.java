@@ -34,6 +34,13 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    /**
+     * Make new payment
+     *
+     * @param paymentRequestDto payment request dto
+     * @param request authentication request
+     * @return Success / Error response
+     */
     @PostMapping("")
     public ResponseEntity<ResponseWrapper> makePayment(@RequestBody PaymentRequestDto paymentRequestDto,
                                                        HttpServletRequest request) {
@@ -56,6 +63,13 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Update existing payment
+     *
+     * @param updatePaymentRequestDto update payment request dto
+     * @param request authentication request
+     * @return Success / Error response
+     */
     @PutMapping("")
     public ResponseEntity<ResponseWrapper> updatePayment(@RequestBody UpdatePaymentRequestDto updatePaymentRequestDto,
                                                          HttpServletRequest request) {
@@ -82,6 +96,12 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Get all payment details which mapped with student and location details
+     *
+     * @param request authentication request
+     * @return Success / Error response
+     */
     @GetMapping("")
     public ResponseEntity<ResponseWrapper> getAllPayment(HttpServletRequest request) {
         try {
@@ -98,11 +118,22 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Get all payment details which belongs a student
+     *
+     * @param studentId student id
+     * @param request authentication request
+     * @return Success / Error response
+     */
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<ResponseWrapper> getAllPaymentsByStudentId(@PathVariable String studentId) {
+    public ResponseEntity<ResponseWrapper> getAllPaymentsByStudentId(@PathVariable String studentId,
+                                                                     HttpServletRequest request) {
         try {
+            String authToken = request.getHeader(Constants.TOKEN_HEADER);
             Page<Payment> paymentPage = paymentService.getPaymentsByStudentId(studentId);
-            var response = new PaymentListResponseDto(paymentPage, null, null);
+            var studentMap = paymentService.getStudentsDetails(authToken);
+            var locationMap = paymentService.getTuitionClassDetails(authToken);
+            var response = new PaymentListResponseDto(paymentPage, studentMap, locationMap);
             var successResponseWrapper = new SuccessResponseWrapper(SuccessResponseStatus.READ_LIST_PAYMENT, response);
             return new ResponseEntity<>(successResponseWrapper, HttpStatus.OK);
         } catch (PaymentException e) {
@@ -111,22 +142,12 @@ public class PaymentController {
         }
     }
 
-    @GetMapping("/{paymentId}")
-    public ResponseEntity<ResponseWrapper> getPaymentById(@PathVariable String paymentId) {
-        try {
-            Payment payment = paymentService.getPaymentById(paymentId);
-            var response = new PaymentResponseDto(payment);
-            var successResponseWrapper = new SuccessResponseWrapper(SuccessResponseStatus.READ_PAYMENT, response);
-            return new ResponseEntity<>(successResponseWrapper, HttpStatus.OK);
-        } catch (InvalidPaymentException e) {
-            var response = new ErrorResponseWrapper(ErrorResponseStatus.INVALID_PAYMENT, null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        } catch (PaymentException e) {
-            var response = new ErrorResponseWrapper(ErrorResponseStatus.INTERNAL_SERVER_ERROR, null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
+    /**
+     * Delete a existing payment
+     *
+     * @param paymentId payment id
+     * @return Success / Error response
+     */
     @DeleteMapping("/{paymentId}")
     public ResponseEntity<ResponseWrapper> deletePayment(@PathVariable String paymentId) {
         try {
@@ -142,6 +163,14 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Get the paid and unpaid student details on a particular month
+     *
+     * @param month month
+     * @param year year
+     * @param request authentication request
+     * @return Success / Error response
+     */
     @GetMapping("/user/report/{month}/{year}")
     public ResponseEntity<ResponseWrapper> getUserReport(@PathVariable String month, @PathVariable int year,
                                                             HttpServletRequest request) {
