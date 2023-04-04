@@ -38,3 +38,11 @@ location:
 
 security:
   key: accessKey
+
+
+logging:
+  level:
+    com.cms.payment: ${LOG_LEVEL:DEBUG}
+  file:
+    path: ${LOGPATH:./log}
+
