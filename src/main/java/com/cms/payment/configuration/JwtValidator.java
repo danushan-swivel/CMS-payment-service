@@ -17,6 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,5 +47,16 @@ public class JwtValidator extends OncePerRequestFilter {
             throw new BadCredentialsException("Invalid JWT token");
         }
         filterChain.doFilter(httpServletRequest, httpServletResponse);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request){
+        String[] requests = {"/v2/api-docs", "/swagger-resources", "/swagger-ui/", "/swagger-ui/springfox.css",
+                "/swagger-ui/swagger-ui-bundle.js", "/swagger-ui/swagger-ui.css",
+                "/swagger-resources/configuration/security", "/swagger-resources/configuration/ui",
+                "/swagger-ui/springfox.js", "/swagger-ui/swagger-ui-standalone-preset.js", "/swagger-ui/favicon-32x32.png"
+        };
+        List<String> requestList = Arrays.asList(requests);
+        return requestList.contains(request.getServletPath());
     }
 }

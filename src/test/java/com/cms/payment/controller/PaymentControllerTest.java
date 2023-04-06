@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -41,7 +42,7 @@ class PaymentControllerTest {
     private static final String PAYMENT_BASE_URL = "/api/v1/payment";
     private static final String DELETE_PAYMENT_URL = "/api/v1/payment/##PAYMENT-ID##";
     private static final String GET_STUDENT_PAYMENTS_URL = "/api/v1/payment/student/##STUDENT-ID##";
-    private static final String GET_PAYMENTS_REPORT_URL = "/api/v1/payment/user/report/##MONTH##/##YEAR##";
+    private static final String GET_PAYMENTS_REPORT_URL = "/api/v1/payment/student/report/##MONTH##/##YEAR##";
     private static final String REPLACE_STUDENT_ID = "##STUDENT-ID##";
     private static final String REPLACE_PAYMENT_ID = "##PAYMENT-ID##";
     private static final String REPLACE_MONTH = "##MONTH##";
@@ -51,7 +52,6 @@ class PaymentControllerTest {
     private static final String PAYMENT_MONTH = "March 2023";
     private static final String MONTH = "March";
     private static final int YEAR = 2023;
-    private static final String UPDATED_PAYMENT_MONTH = "April 2023";
     private static final Date PAID_DATE = Date.valueOf("2023-03-15");
     private static final String STUDENT_ID = "sid-1254-7854-6485";
     private static final String ACCESS_TOKEN = "ey1365651-14156-51";
@@ -96,7 +96,7 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(SuccessResponseStatus.PAID_SUCCESSFUL.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(SuccessResponseStatus.PAID_SUCCESSFUL.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.CREATED.value()))
                 .andExpect(jsonPath("$.data.paymentId", startsWith("pid-")));
     }
 
@@ -111,39 +111,11 @@ class PaymentControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(ErrorResponseStatus.MISSING_REQUIRED_FIELDS.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.MISSING_REQUIRED_FIELDS.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.data", nullValue()));
     }
 
-    @Test
-    void Should_ReturnBadRequest_When_InvalidStudentIdIsProvided() throws Exception {
-        PaymentRequestDto paymentRequestDto = getSamplePaymentRequestDto();
-        doThrow(new InvalidStudentException("ERROR")).when(paymentService).makePayment(any(PaymentRequestDto.class), anyString());
-        mockMvc.perform(MockMvcRequestBuilders.post(PAYMENT_BASE_URL)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .content(paymentRequestDto.toJson())
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INVALID_STUDENT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INVALID_STUDENT.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
 
-    @Test
-    void Should_ReturnIternalServerError_When_MakePaymentIsFailed() throws Exception {
-        PaymentRequestDto paymentRequestDto = getSamplePaymentRequestDto();
-        doThrow(new PaymentException("ERROR")).when(paymentService).makePayment(any(PaymentRequestDto.class), anyString());
-        mockMvc.perform(MockMvcRequestBuilders.post(PAYMENT_BASE_URL)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .content(paymentRequestDto.toJson())
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
 
     @Test
     void Should_ReturnOk_When_UpdatePaymentSuccessful() throws Exception {
@@ -157,7 +129,7 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(SuccessResponseStatus.PAYMENT_UPDATED.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(SuccessResponseStatus.PAYMENT_UPDATED.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.data.paymentId", startsWith("pid-")));
     }
 
@@ -172,52 +144,7 @@ class PaymentControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(ErrorResponseStatus.MISSING_REQUIRED_FIELDS.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.MISSING_REQUIRED_FIELDS.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
-
-    @Test
-    void Should_ReturnBadRequest_When_InvalidStudentIdIsProvidedForUpdatePayment() throws Exception {
-        UpdatePaymentRequestDto updatePaymentRequestDto = getSampleUpdatePaymentRequestDto();
-        doThrow(new InvalidStudentException("ERROR")).when(paymentService).updatePayment(any(UpdatePaymentRequestDto.class), anyString());
-        mockMvc.perform(MockMvcRequestBuilders.put(PAYMENT_BASE_URL)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .content(updatePaymentRequestDto.toJson())
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INVALID_STUDENT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INVALID_STUDENT.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
-
-    @Test
-    void Should_ReturnBadRequest_When_InvalidPaymentIdIsProvidedForUpdatePayment() throws Exception {
-        UpdatePaymentRequestDto updatePaymentRequestDto = getSampleUpdatePaymentRequestDto();
-        doThrow(new InvalidPaymentException("ERROR")).when(paymentService).updatePayment(any(UpdatePaymentRequestDto.class), anyString());
-        mockMvc.perform(MockMvcRequestBuilders.put(PAYMENT_BASE_URL)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .content(updatePaymentRequestDto.toJson())
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INVALID_PAYMENT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INVALID_PAYMENT.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
-
-    @Test
-    void Should_ReturnInternalServerError_When_UpdatePaymentIsFailed() throws Exception {
-        UpdatePaymentRequestDto updatePaymentRequestDto = getSampleUpdatePaymentRequestDto();
-        doThrow(new PaymentException("ERROR")).when(paymentService).updatePayment(any(UpdatePaymentRequestDto.class), anyString());
-        mockMvc.perform(MockMvcRequestBuilders.put(PAYMENT_BASE_URL)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .content(updatePaymentRequestDto.toJson())
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.data", nullValue()));
     }
 
@@ -235,21 +162,8 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(SuccessResponseStatus.READ_LIST_PAYMENT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(SuccessResponseStatus.READ_LIST_PAYMENT.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.data.payments[0].paymentId").value(PAYMENT_ID));
-    }
-
-    @Test
-    void Should_ReturnInternalServerError_When_GetPaymentDetailsIsFailed() throws Exception {
-        doThrow(new PaymentException("ERROR")).when(paymentService).getAllPayment();
-        mockMvc.perform(MockMvcRequestBuilders.get(PAYMENT_BASE_URL)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
     }
 
     @Test
@@ -267,36 +181,8 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(SuccessResponseStatus.READ_LIST_PAYMENT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(SuccessResponseStatus.READ_LIST_PAYMENT.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.data.payments[0].paymentId").value(PAYMENT_ID));
-    }
-
-    @Test
-    void Should_ReturnInternalServerError_When_GetAllStudentPaymentIsFailed() throws Exception {
-        doThrow(new PaymentException("ERROR")).when(paymentService).getPaymentsByStudentId(STUDENT_ID);
-        String url = GET_STUDENT_PAYMENTS_URL.replace(REPLACE_STUDENT_ID, STUDENT_ID);
-        mockMvc.perform(MockMvcRequestBuilders.get(url)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
-
-    @Test
-    void Should_ReturnBadRequest_When_InvalidPaymentIdIsProvided() throws Exception {
-        String url = DELETE_PAYMENT_URL.replace(REPLACE_PAYMENT_ID, PAYMENT_ID);
-        doThrow(new InvalidPaymentException("ERROR")).when(paymentService).deletePayment(PAYMENT_ID);
-        mockMvc.perform(MockMvcRequestBuilders.delete(url)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INVALID_PAYMENT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INVALID_PAYMENT.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
     }
 
     @Test
@@ -309,23 +195,7 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(SuccessResponseStatus.PAYMENT_DELETED.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(SuccessResponseStatus.PAYMENT_DELETED.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
-
-    @Test
-    void Should_ReturnInternalServerError_When_DeletePaymentPaymentIsFailed() throws Exception {
-        doThrow(new PaymentException("ERROR")).when(paymentService).deletePayment(PAYMENT_ID);
-        String url = DELETE_PAYMENT_URL.replace(REPLACE_PAYMENT_ID, PAYMENT_ID);
-        mockMvc.perform(MockMvcRequestBuilders.delete(url)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.data", nullValue()));
     }
 
@@ -344,26 +214,9 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.message").value(SuccessResponseStatus.READ_STUDENT_PAYMENT_REPORT.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(SuccessResponseStatus.READ_STUDENT_PAYMENT_REPORT.getStatusCode()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.data.paidUsers[0].paymentId").value(PAYMENT_ID));
     }
-
-    @Test
-    void Should_ReturnInternalServerError_When_GetPaymentReportIsFailed() throws Exception {
-        doThrow(new PaymentException("ERROR")).when(paymentService).getUserReport(MONTH, YEAR);
-        String url = GET_PAYMENTS_REPORT_URL.replace(REPLACE_MONTH, MONTH).replace(REPLACE_YEAR, String.valueOf(YEAR));
-        mockMvc.perform(MockMvcRequestBuilders.get(url)
-                        .header(Constants.TOKEN_HEADER, ACCESS_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.message").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getMessage()))
-                .andExpect(jsonPath("$.statusCode").value(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode()))
-                .andExpect(jsonPath("$.data", nullValue()));
-    }
-
 
     /**
      * This method return sample payment

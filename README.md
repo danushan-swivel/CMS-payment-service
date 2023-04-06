@@ -1,6 +1,38 @@
-# CMS-payment-service
-The repository contains Classs Management System's student payment management service
+## Payment Service
+This is payment microservice of the Class Management System
+
+## Requirements
+* Open JDK 11
+* Spring boot 2.7.9
+* MySQL 8.0
+* Maven 3.6
 
 
-#Sonar Report
-![payment-sonar](https://user-images.githubusercontent.com/101617280/226343101-6613dd1c-4209-4cf6-a6d0-93acec9a4599.png)
+
+## Build
+
+```
+mvn clean compile package
+```
+
+## Run
+
+```
+mvn spring-boot:run
+```
+
+or
+
+```
+java -jar target/cms_payment_service-0.0.1-SNAPSHOT.jar
+```
+
+## Test
+
+```
+mvn test
+```
+
+## Sonar Dashboard
+```
+https://sonarcloud.io/project/overview?id=danushan-swivel_CMS-payment-service```

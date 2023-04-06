@@ -6,7 +6,6 @@ import com.cms.payment.domain.request.PaymentRequestDto;
 import com.cms.payment.domain.request.UpdatePaymentRequestDto;
 import com.cms.payment.domain.response.StudentResponseDto;
 import com.cms.payment.domain.response.TuitionClassResponseDto;
-import com.cms.payment.enums.SuccessResponseStatus;
 import com.cms.payment.exception.*;
 import com.cms.payment.repository.PaymentRepository;
 import com.cms.payment.utills.Constants;
@@ -23,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -295,6 +295,6 @@ public class PaymentService {
         var studentResponse = restTemplate.exchange(uri, HttpMethod.GET, entity,
                 StudentResponseWrapper.class);
         var statusCode = Objects.requireNonNull(studentResponse.getBody()).getStatusCode();
-        return statusCode == SuccessResponseStatus.READ_STUDENT.getStatusCode();
+        return statusCode == HttpStatus.OK.value();
     }
 }

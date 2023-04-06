@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -22,9 +23,12 @@ import java.util.UUID;
 public class Payment {
     private static final String PREFIX = "pid-";
     @Id
+    @Column(length = 50)
     private String paymentId;
+    @Column(length = 20)
     private String paymentMonth;
     private Date paidDate;
+    @Column(length = 50)
     private String studentId;
     private Date updatedAt;
     private boolean isDeleted;

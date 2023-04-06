@@ -123,7 +123,7 @@ class PaymentServiceTest {
     void Should_ThrowInvalidStudentException_When_InvalidStudentIdIsProvided() {
         PaymentRequestDto paymentRequestDto = getSamplePaymentRequestDto();
         StudentResponseWrapper studentResponseWrapper = getSampleStudentResponseWrapper();
-        studentResponseWrapper.setStatusCode(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode());
+        studentResponseWrapper.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         when(paymentRepository.existsByPaymentMonthAndStudentIdAndIsDeletedFalse(PAYMENT_MONTH, STUDENT_ID)).thenReturn(false);
         when(restTemplate.exchange(anyString(), any(HttpMethod.class), any(HttpEntity.class),
                 eq(StudentResponseWrapper.class))).thenReturn(ResponseEntity.of(Optional.of(studentResponseWrapper)));
@@ -231,7 +231,7 @@ class PaymentServiceTest {
     void Should_ThrowInvalidStudentException_When_InvalidStudentIdIsProvidedForUpdatePayment() {
         UpdatePaymentRequestDto updatePaymentRequestDto = getSampleUpdatePaymentRequestDto();
         StudentResponseWrapper studentResponseWrapper = getSampleStudentResponseWrapper();
-        studentResponseWrapper.setStatusCode(ErrorResponseStatus.INTERNAL_SERVER_ERROR.getStatusCode());
+        studentResponseWrapper.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         Payment payment = getSamplePayment();
         when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.existsByPaymentMonthAndStudentIdAndPaymentIdAndIsDeletedFalse(PAYMENT_MONTH, STUDENT_ID, PAYMENT_ID)).thenReturn(false);
@@ -487,7 +487,7 @@ class PaymentServiceTest {
         StudentResponseDto studentResponseDto = getSampleStudentRequestDto();
         StudentResponseWrapper studentResponseWrapper = new StudentResponseWrapper();
         studentResponseWrapper.setMessage(SuccessResponseStatus.READ_STUDENT.getMessage());
-        studentResponseWrapper.setStatusCode(SuccessResponseStatus.READ_STUDENT.getStatusCode());
+        studentResponseWrapper.setStatusCode(HttpStatus.OK.value());
         studentResponseWrapper.setData(studentResponseDto);
         return studentResponseWrapper;
     }
@@ -567,7 +567,7 @@ class PaymentServiceTest {
         StudentListResponseWrapper studentListResponseWrapper = new StudentListResponseWrapper();
         studentListResponseWrapper.setData(studentListResponseDto);
         studentListResponseWrapper.setMessage(SuccessResponseStatus.READ_STUDENT_LIST.getMessage());
-        studentListResponseWrapper.setStatusCode(SuccessResponseStatus.READ_STUDENT_LIST.getStatusCode());
+        studentListResponseWrapper.setStatusCode(HttpStatus.OK.value());
         return studentListResponseWrapper;
     }
 
@@ -594,7 +594,7 @@ class PaymentServiceTest {
         TuitionClassListResponseDto tuitionClassListResponseDto = getSampleTuitionClassListResponseDto();
         TuitionClassListResponseWrapper tuitionClassListResponseWrapper = new TuitionClassListResponseWrapper();
         tuitionClassListResponseWrapper.setMessage(SuccessResponseStatus.READ_LOCATION_LIST.getMessage());
-        tuitionClassListResponseWrapper.setStatusCode(SuccessResponseStatus.READ_LOCATION_LIST.getStatusCode());
+        tuitionClassListResponseWrapper.setStatusCode(HttpStatus.OK.value());
         tuitionClassListResponseWrapper.setData(tuitionClassListResponseDto);
         return tuitionClassListResponseWrapper;
     }
