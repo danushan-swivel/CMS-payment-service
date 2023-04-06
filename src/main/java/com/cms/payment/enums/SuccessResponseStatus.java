@@ -5,21 +5,19 @@ import lombok.Getter;
 @Getter
 public enum SuccessResponseStatus {
 
-    PAID_SUCCESSFUL(2050, "The payment made successfully"),
-    READ_STUDENT(2004, "Student retrieved successfully"),
-    READ_STUDENT_LIST(2002, "Students details retrieved successfully"),
-    READ_LOCATION_LIST(2031, "All location details retrieved successfully"),
-    PAYMENT_UPDATED(2051, "The payment updated successfully"),
-    PAYMENT_DELETED(2052, "The payment deleted successfully"),
-    READ_PAYMENT(2053, "The payment retrieved successfully"),
-    READ_LIST_PAYMENT(2054, "The payment list retrieved successfully"),
-    READ_STUDENT_LIST_PAYMENT(2055, "The student payment list retrieved successfully"),
-    READ_STUDENT_PAYMENT_REPORT(2056, "The student payment report retrieved successfully");
+    PAID_SUCCESSFUL("The payment made successfully"),
+    READ_STUDENT("Student retrieved successfully"),
+    READ_STUDENT_LIST("Students details retrieved successfully"),
+    READ_LOCATION_LIST("All location details retrieved successfully"),
+    PAYMENT_UPDATED("The payment updated successfully"),
+    PAYMENT_DELETED("The payment deleted successfully"),
+    READ_PAYMENT("The payment retrieved successfully"),
+    READ_LIST_PAYMENT("The payment list retrieved successfully"),
+    READ_STUDENT_LIST_PAYMENT("The student payment list retrieved successfully"),
+    READ_STUDENT_PAYMENT_REPORT("The student payment report retrieved successfully");
     private final String message;
-    private final int statusCode;
 
-    SuccessResponseStatus(int statusCode, String message) {
+    SuccessResponseStatus(String message) {
         this.message = message;
-        this.statusCode = statusCode;
     }
 }
