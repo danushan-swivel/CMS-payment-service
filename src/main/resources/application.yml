@@ -6,11 +6,14 @@ server:
 spring:
   application:
     name: CMS-Student-Payment
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
 
   datasource:
-    url: jdbc:mysql://bade90e09555e2:d1873f8e@us-cdbr-east-06.cleardb.net/heroku_80aa2644224a030?reconnect=true
-#    username: root
-#    password: Dev@#$123
+    url: jdbc:mysql://localhost:3306/cms_payment
+    username: root
+    password: Dev@#$123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -21,19 +24,19 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: https://cms-discovery.herokuapp.com/eureka
+      defaultZone: http://localhost:8761/eureka
   instance:
     preferIpAddress: true
 
 student:
   uri:
-    baseUrl: https://cms-student.herokuapp.com/
+    baseUrl: http://localhost:8104/
     getStudentById: student/api/v1/student/##STUDENT-ID##
     getAllStudentDetails: student/api/v1/student
 
 location:
   uri:
-    baseUrl: https://cms-tuition-class.herokuapp.com/
+    baseUrl: http://localhost:8105/
     getAllLocationDetails: tuition/api/v1/tuition/
 
 security:
