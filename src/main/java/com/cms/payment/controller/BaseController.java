@@ -24,7 +24,7 @@ public class BaseController {
     public ResponseEntity<ResponseWrapper> getSuccessResponse(SuccessResponseStatus statusMessage,
                                                               ResponseDto data, HttpStatus httpStatus) {
         var wrapper = new SuccessResponseWrapper(statusMessage, data, httpStatus);
-        return new ResponseEntity<>(wrapper, HttpStatus.OK);
+        return new ResponseEntity<>(wrapper, httpStatus);
     }
 
     /**
