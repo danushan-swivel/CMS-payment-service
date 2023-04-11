@@ -37,14 +37,4 @@ public class BaseController {
         var wrapper = new ErrorResponseWrapper(statusMessage, HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(wrapper, HttpStatus.BAD_REQUEST);
     }
-
-    /**
-     * This method generate internal server error response
-     *
-     * @return InternalServerError Response
-     */
-    public ResponseEntity<ResponseWrapper> getInternalServerErrorResponse() {
-        var wrapper = new ErrorResponseWrapper(ErrorResponseStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
-        return new ResponseEntity<>(wrapper, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
 }
